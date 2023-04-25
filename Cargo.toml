@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "net",
+    "game",
+    "launcher"
+]
