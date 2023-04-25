@@ -2,6 +2,6 @@
 
 members = [
     "net",
-    "game",
-    "launcher"
+    "core",
+    "app"
 ]
