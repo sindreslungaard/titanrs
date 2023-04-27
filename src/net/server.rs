@@ -1,3 +1,6 @@
+use crate::core::{Clients, State};
+use crate::net::client::*;
+
 use std::{
     collections::HashMap,
     sync::{
@@ -16,21 +19,19 @@ use warp::{
 
 static ID_GENERATOR: AtomicUsize = AtomicUsize::new(1);
 
-type Clients = Arc<RwLock<HashMap<usize, mpsc::UnboundedSender<Message>>>>;
-
-pub async fn start() {
-    let clients = Clients::default();
+pub async fn start(state: Arc<State>) {
+    let clients = state.clients.clone();
     // Turn our "state" into a new Filter...
-    let clients = warp::any().map(move || clients.clone());
+    let filter = warp::any().map(move || clients.clone());
 
     // GET /chat -> websocket upgrade
     let ws = warp::path::end()
         // The `ws()` filter will prepare Websocket handshake...
         .and(warp::ws())
-        .and(clients)
-        .map(|ws: warp::ws::Ws, users| {
+        .and(filter)
+        .map(|ws: warp::ws::Ws, clients| {
             // This will call our function if the handshake succeeds.
-            ws.on_upgrade(move |socket| client_connected(socket, users))
+            ws.on_upgrade(move |socket| client_connected(socket, clients))
         });
 
     println!("Listening on 127.0.0.1:3030");
@@ -42,7 +43,7 @@ async fn client_connected(ws: WebSocket, clients: Clients) {
     // Use a counter to assign a new unique ID for this user.
     let my_id = ID_GENERATOR.fetch_add(1, Ordering::Relaxed);
 
-    eprintln!("new chat user: {}", my_id);
+    println!("new chat user: {}", my_id);
 
     // Split the socket into a sender and receive of messages.
     let (mut user_ws_tx, mut user_ws_rx) = ws.split();
@@ -63,8 +64,10 @@ async fn client_connected(ws: WebSocket, clients: Clients) {
         }
     });
 
+    let client = Client::new(my_id, tx);
+
     // Save the sender in our list of connected users.
-    clients.write().await.insert(my_id, tx);
+    clients.write().await.insert(my_id, client);
 
     // Return a `Future` that is basically a state machine managing
     // this specific user's connection.
@@ -72,14 +75,29 @@ async fn client_connected(ws: WebSocket, clients: Clients) {
     // Every time the user sends a message, broadcast it to
     // all other users...
     while let Some(result) = user_ws_rx.next().await {
-        let _msg = match result {
+        let msg = match result {
             Ok(msg) => msg,
             Err(e) => {
                 eprintln!("websocket error(uid={}): {}", my_id, e);
                 break;
             }
         };
-        //user_message(my_id, msg, &users).await;
+
+        match clients.read().await.get(&my_id) {
+            Some(client) => match &client.user {
+                Some(_user) => {}
+                None => {
+                    println!("we need to authenticate the user");
+                }
+            },
+            None => {
+                println!("error parsing client message")
+            }
+        }
+        match clients.read().await.get(&my_id) {
+            Some(client) => client.receive(msg),
+            None => {}
+        }
     }
 
     // user_ws_rx stream will keep processing as long as the user stays
