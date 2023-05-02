@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 actix = "0.13.0"
 room = { path = "../room" }
+serde = { version = "1.0.160", features = ["derive"] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls" ] }
+toml = "0.7.3"
