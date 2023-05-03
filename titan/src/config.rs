@@ -1,19 +1,22 @@
+use log;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use toml;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    mysql: Mysql,
+    pub log_level: String,
+    pub mysql: Mysql,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Mysql {
-    db_host: String,
-    db_port: i32,
-    db_name: String,
-    db_user: String,
-    db_pass: String,
+pub struct Mysql {
+    pub db_host: String,
+    pub db_port: i32,
+    pub db_name: String,
+    pub db_user: String,
+    pub db_pass: String,
+    pub max_connections: u32,
 }
 
 impl Config {
@@ -23,7 +26,7 @@ impl Config {
         let config = match file {
             Ok(content) => content,
             Err(_) => {
-                println!("Error loading config, creating default");
+                info!("Error loading config, creating default");
                 let default_config = Config::default().to_string();
                 fs::write(file_path, &default_config).unwrap();
                 default_config
@@ -52,12 +55,14 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            log_level: "info".to_string(),
             mysql: Mysql {
                 db_host: "localhost".to_string(),
                 db_port: 3306,
                 db_name: "titan".to_string(),
                 db_user: "root".to_string(),
                 db_pass: "".to_string(),
+                max_connections: 5,
             },
         }
     }

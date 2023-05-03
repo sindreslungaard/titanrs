@@ -9,5 +9,7 @@ edition = "2021"
 actix = "0.13.0"
 room = { path = "../room" }
 serde = { version = "1.0.160", features = ["derive"] }
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls" ] }
+sqlx = { version = "0.6", features = [ "runtime-actix-rustls", "mysql" ] }
 toml = "0.7.3"
+log = "0.4"
+pretty_env_logger = "0.4"
