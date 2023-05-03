@@ -1,30 +1,27 @@
+#[macro_use]
+extern crate sqlx;
+
+use std::error::Error;
+
 use actix::{Actor, Context, System};
+use data::room_data::RoomData;
+use sqlx::MySqlPool;
 
+pub mod data;
 pub mod manager;
-
-#[derive(Clone)]
-pub struct RoomData {
-    _id: i32,
-    _owner: i32,
-    _name: String,
-    _description: String,
-    _password: String,
-    _max_users: i32,
-    _floor_plan: String,
-    _door_x: i32,
-    _door_y: i32,
-    _walk_through: bool,
-    _floor_thickness: i32,
-    _wall_thickness: i32,
-    _wall_height: i32,
-    _wall_hidden: bool,
+pub struct Room {
+    db_pool: MySqlPool,
+    pub data: RoomData,
 }
 
-pub struct Room {/* pub data: Option<RoomData>, */}
-
 impl Room {
-    pub fn new() -> Room {
-        Room {}
+    pub async fn load(id: i32, db_pool: MySqlPool) -> Option<Self> {
+        let data = match RoomData::by_id(id, db_pool.clone()).await {
+            Ok(d) => d,
+            Err(_) => return None,
+        };
+
+        Some(Room { db_pool, data })
     }
 }
 

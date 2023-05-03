@@ -6,7 +6,7 @@ extern crate pretty_env_logger;
 extern crate log;
 
 use actix::{Actor, System};
-use room::Room;
+use room::{manager::RoomManager, Room};
 
 use config::Config;
 
@@ -32,6 +32,8 @@ async fn main() {
         .connect(&connection_string)
         .await
         .unwrap();
+
+    let room_manager = RoomManager::new(pool.clone()).start();
 
     let room = Room::new();
     room.start();
