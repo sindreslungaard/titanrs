@@ -1,4 +1,5 @@
 use sqlx::mysql::MySqlPoolOptions;
+use tokio::sync::oneshot;
 use std::collections::HashMap;
 
 extern crate pretty_env_logger;
@@ -35,6 +36,13 @@ async fn main() {
     info!("try create room manager");
 
     let room_manager = RoomManager::new(pool.clone());
+
+    let (tx, rx) = oneshot::channel();
+    room_manager.send(LoadRoom { room_id: 1, response: tx }).await.unwrap();
+    let room_data = rx.await.unwrap().unwrap();
+    info!("room data: {:?}", room_data);
+
+
     
 
     /* let room = Room::new();

@@ -26,6 +26,8 @@ impl Room {
             Err(_) => return None,
         };
 
+        info!("Loaded room {}", data.id);
+
         Some(Room { db_pool, data })
     }
 }
