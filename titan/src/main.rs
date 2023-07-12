@@ -5,14 +5,13 @@ extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 
-use actix::{Actor, System};
-use room::{manager::RoomManager, Room};
+use room::{manager::{RoomManager, Command::LoadRoom}, Room};
 
 use config::Config;
 
 mod config;
 
-#[actix::main]
+#[tokio::main]
 async fn main() {
     let config = Config::load("./config.toml".to_string());
 
@@ -33,10 +32,13 @@ async fn main() {
         .await
         .unwrap();
 
-    let room_manager = RoomManager::new(pool.clone()).start();
+    info!("try create room manager");
 
-    let room = Room::new();
-    room.start();
+    let room_manager = RoomManager::new(pool.clone());
+    
+
+    /* let room = Room::new();
+    room.start(); */
 
     info!("done");
 }

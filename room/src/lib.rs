@@ -1,14 +1,19 @@
 #[macro_use]
 extern crate sqlx;
 
+extern crate pretty_env_logger;
+#[macro_use]
+extern crate log;
+
 use std::error::Error;
 
-use actix::{Actor, Context, System};
 use data::room_data::RoomData;
+use manager::RoomManager;
 use sqlx::MySqlPool;
 
 pub mod data;
 pub mod manager;
+
 pub struct Room {
     db_pool: MySqlPool,
     pub data: RoomData,
@@ -22,14 +27,5 @@ impl Room {
         };
 
         Some(Room { db_pool, data })
-    }
-}
-
-impl Actor for Room {
-    type Context = Context<Self>;
-
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        println!("Room process {} started", "-1");
-        System::current().stop(); // <- stop system
     }
 }

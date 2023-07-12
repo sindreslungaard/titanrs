@@ -2,7 +2,7 @@ use sqlx::{mysql::MySqlPool, Error, FromRow};
 
 #[derive(Clone, Debug, FromRow)]
 pub struct RoomData {
-    id: i32,
+    pub id: i32,
     owner: i32,
     name: String,
     description: String,
@@ -22,8 +22,8 @@ impl RoomData {
     pub async fn by_id(id: i32, conn: MySqlPool) -> Result<RoomData, Error> {
         let row = sqlx::query("SELECT * FROM rooms WHERE id = ?")
             .bind(id)
-            .fetch_one(&conn)
-            .await?;
+            .fetch_one(&conn).await?;
+            
 
         RoomData::from_row(&row)
     }
