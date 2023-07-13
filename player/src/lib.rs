@@ -1,14 +1,9 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+extern crate pretty_env_logger;
+#[macro_use]
+extern crate log;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod command;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub struct Player {
+    id: usize
 }
