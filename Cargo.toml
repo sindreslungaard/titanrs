@@ -3,6 +3,6 @@
 members = [
     "room",
     "player",
-    "nets",
+    "server",
     "titan",
 ]

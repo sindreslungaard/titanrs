@@ -1,6 +1,6 @@
 use sqlx::mysql::MySqlPoolOptions;
 use tokio::sync::oneshot;
-use std::collections::HashMap;
+use std::{collections::HashMap, net::SocketAddr};
 
 extern crate pretty_env_logger;
 #[macro_use]
@@ -33,17 +33,14 @@ async fn main() {
         .await
         .unwrap();
 
-    info!("try create room manager");
-
     let room_manager = RoomManager::new(pool.clone());
 
     let (tx, rx) = oneshot::channel();
     room_manager.send(LoadRoom { room_id: 1, response: tx }).await.unwrap();
     let room_data = rx.await.unwrap().unwrap();
-    info!("room data: {:?}", room_data);
 
 
-    
+    server::start().await;
 
     /* let room = Room::new();
     room.start(); */
