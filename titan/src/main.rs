@@ -40,7 +40,7 @@ async fn main() {
     let room_data = rx.await.unwrap().unwrap();
 
 
-    server::start().await;
+    server::start(SocketAddr::from(([127, 0, 0, 1], 3030))).await;
 
     /* let room = Room::new();
     room.start(); */
