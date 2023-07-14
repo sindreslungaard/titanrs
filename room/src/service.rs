@@ -14,18 +14,18 @@ pub enum Command {
     },
 }
 
-pub struct RoomManager {
-    db_pool: MySqlPool,
+pub struct Service {
+    ctx: titan::ctx::Context,
     rooms: HashMap<i32, Room>,
 }
 
-impl RoomManager {
-    pub fn new(db_pool: MySqlPool) -> mpsc::Sender<Command> {
+impl Service {
+    pub fn new(ctx: titan::ctx::Context) -> mpsc::Sender<Command> {
         let (tx, rx) = mpsc::channel(1);
 
         tokio::spawn(async move {
-            RoomManager {
-                db_pool,
+            Service {
+                ctx,
                 rooms: HashMap::new(),
             }.run(rx).await;
         });

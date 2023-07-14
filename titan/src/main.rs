@@ -6,11 +6,12 @@ extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 
-use room::{manager::{RoomManager, Command::LoadRoom}, Room};
+use room::{service::{Service, Command::LoadRoom}, Room};
 
 use config::Config;
 
 mod config;
+pub mod ctx;
 
 #[tokio::main]
 async fn main() {
@@ -33,7 +34,7 @@ async fn main() {
         .await
         .unwrap();
 
-    let room_manager = RoomManager::new(pool.clone());
+    let room_manager = Service::new(pool.clone());
 
     let (tx, rx) = oneshot::channel();
     room_manager.send(LoadRoom { room_id: 1, response: tx }).await.unwrap();

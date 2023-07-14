@@ -8,11 +8,11 @@ extern crate log;
 use std::error::Error;
 
 use data::room_data::RoomData;
-use manager::RoomManager;
+use service::Service;
 use sqlx::MySqlPool;
 
 pub mod data;
-pub mod manager;
+pub mod service;
 
 pub struct Room {
     db_pool: MySqlPool,
