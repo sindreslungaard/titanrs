@@ -2,27 +2,19 @@ use sqlx::mysql::MySqlPool;
 use std::collections::HashMap;
 use tokio::sync::oneshot;
 use tokio::sync::mpsc;
+use ctx::room::*;
+use anyhow::anyhow;
 
 use crate::Room;
 use crate::data::room_data::RoomData;
 
-#[derive(Debug)]
-pub enum Command {
-    LoadRoom {
-        room_id: i32,
-        response: oneshot::Sender<Result<RoomData, i32>>
-    },
-}
-
 pub struct Service {
-    ctx: titan::ctx::Context,
+    ctx: ctx::Context,
     rooms: HashMap<i32, Room>,
 }
 
 impl Service {
-    pub fn new(ctx: titan::ctx::Context) -> mpsc::Sender<Command> {
-        let (tx, rx) = mpsc::channel(1);
-
+    pub fn new(ctx: ctx::Context, rx: mpsc::Receiver<Command>) {
         tokio::spawn(async move {
             Service {
                 ctx,
@@ -30,17 +22,24 @@ impl Service {
             }.run(rx).await;
         });
 
-        info!("Room manager started");
-
-        tx
+        info!("Room service started");
     }
 
-    async fn run(&self, mut rx: mpsc::Receiver<Command>) {
+    async fn run(&self, mut rx: mpsc::Receiver<ctx::room::Command>) {
 
         while let Some(msg) = rx.recv().await {
             match msg {
                 Command::LoadRoom { room_id, response } => {
-                    let _ = response.send(self.load_room(room_id).await);
+                    match self.load_room(room_id).await {
+                        Ok(room) => {
+                            let _ = response.send(Ok(LoadRoomResponse {
+                                room_id: room.id
+                            }));
+                        }
+                        Err(_) => {
+                            let _ = response.send(Err(anyhow!("Test")));
+                        }
+                    }
                 }
             };
         }
@@ -49,7 +48,7 @@ impl Service {
     }
 
     async fn load_room(&self, room_id: i32) -> Result<RoomData, i32> {
-        match Room::load(room_id, self.db_pool.clone()).await {
+        match Room::load(room_id, self.ctx.db_pool.clone()).await {
             Some(room) => Ok(room.data.clone()),
             None => Err(0)
         }

@@ -1,17 +1,17 @@
+use ctx::Context;
 use sqlx::mysql::MySqlPoolOptions;
-use tokio::sync::oneshot;
 use std::{collections::HashMap, net::SocketAddr};
+use tokio::sync::{mpsc, oneshot};
 
 extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 
-use room::{service::{Service, Command::LoadRoom}, Room};
+use room::{service::Service, Room};
 
 use config::Config;
 
 mod config;
-pub mod ctx;
 
 #[tokio::main]
 async fn main() {
@@ -28,18 +28,32 @@ async fn main() {
     );
 
     info!("Creating mysql connection pool");
-    let pool = MySqlPoolOptions::new()
+    let db_pool = MySqlPoolOptions::new()
         .max_connections(config.mysql.max_connections)
         .connect(&connection_string)
         .await
         .unwrap();
 
-    let room_manager = Service::new(pool.clone());
+    let (room_tx, room_rx) = mpsc::channel(1);
+
+    let ctx = Context {
+        db_pool,
+        room_service: room_tx,
+    };
+
+    room::service::Service::new(ctx.clone(), room_rx);
 
     let (tx, rx) = oneshot::channel();
-    room_manager.send(LoadRoom { room_id: 1, response: tx }).await.unwrap();
+    let _ = ctx
+        .room_service
+        .send(ctx::room::Command::LoadRoom {
+            room_id: 1,
+            response: tx,
+        })
+        .await;
     let room_data = rx.await.unwrap().unwrap();
 
+    debug!("room id: {}", room_data.room_id);
 
     server::start(SocketAddr::from(([127, 0, 0, 1], 3030))).await;
 
