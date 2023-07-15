@@ -13,18 +13,18 @@ pub struct Service {
     rooms: HashMap<i32, Room>,
 }
 
+pub fn start(ctx: ctx::Context, rx: mpsc::Receiver<Command>) {
+    tokio::spawn(async move {
+        Service {
+            ctx,
+            rooms: HashMap::new(),
+        }.run(rx).await;
+    });
+
+    info!("Room service started");
+}
+
 impl Service {
-    pub fn new(ctx: ctx::Context, rx: mpsc::Receiver<Command>) {
-        tokio::spawn(async move {
-            Service {
-                ctx,
-                rooms: HashMap::new(),
-            }.run(rx).await;
-        });
-
-        info!("Room service started");
-    }
-
     async fn run(&self, mut rx: mpsc::Receiver<ctx::room::Command>) {
 
         while let Some(msg) = rx.recv().await {

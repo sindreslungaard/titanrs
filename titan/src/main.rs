@@ -41,7 +41,7 @@ async fn main() {
         room_service: room_tx,
     };
 
-    room::service::Service::new(ctx.clone(), room_rx);
+    room::service::start(ctx.clone(), room_rx);
 
     let (tx, rx) = oneshot::channel();
     let _ = ctx

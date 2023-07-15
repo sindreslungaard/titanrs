@@ -2,6 +2,7 @@ use sqlx::MySqlPool;
 use tokio::sync::mpsc;
 
 pub mod room;
+pub mod player;
 
 #[derive(Clone)]
 pub struct Context {
